@@ -14,6 +14,7 @@ public class Main {
     // %1$s - 연도 (e.g. 2019)
     // %2$s - 월 (e.g. Oct)
     private static final String PATH_TO_FILE_FORMAT = "archive/%1$s-%2$s.csv";
+    private static final String PATH_TO_PARQUET_OUTPUT = "output";
 
     public static void main(String[] args) {
         final SparkSession sparkSession = SparkInstance.INSTANCE.getSparkSession();
@@ -25,6 +26,12 @@ public class Main {
 
         final Dataset<Row> dfWithEventDate = df.withColumn("event_date",
             date_format(col("event_time"), "yyyy-MM-dd"));
+
+        dfWithEventDate.write()
+            .partitionBy("event_date")
+            .mode("overwrite")
+            .option("compression", "snappy")
+            .parquet(PATH_TO_PARQUET_OUTPUT);
     }
 
     private static StructType getFileSchema() {
