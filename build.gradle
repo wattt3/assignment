@@ -6,6 +6,10 @@ plugins {
 group = 'wattt3'
 version = '1.0-SNAPSHOT'
 
+java {
+    sourceCompatibility = '17'
+}
+
 repositories {
     mavenCentral()
 }
