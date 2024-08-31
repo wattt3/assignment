@@ -14,7 +14,27 @@ public class Main {
     // %1$s - 연도 (e.g. 2019)
     // %2$s - 월 (e.g. Oct)
     private static final String PATH_TO_FILE_FORMAT = "archive/%1$s-%2$s.csv";
-    private static final String PATH_TO_PARQUET_OUTPUT = "output";
+    private static final String ABSOLUTE_PATH_TO_OUTPUT = "output";
+    private static final String HIVE_EXTERNAL_TABLE = "ASSIGNMENT";
+    // %1$s - Absolute path to parquet output
+    // %2$s - HIVE EXTERNAL TABLE 이름
+    private static final String CREATE_EXTERNAL_TABLE = """
+        CREATE EXTERNAL TABLE IF NOT EXISTS %1$s (
+          EVENT_TIME STRING,
+          EVENT_TYPE STRING,
+          PRODUCT_ID BIGINT,
+          CATEGORY_ID BIGINT,
+          CATEGORY_CODE STRING,
+          BRAND STRING,
+          PRICE DOUBLE,
+          USER_ID BIGINT,
+          USER_SESSION STRING
+        ) PARTITIONED BY (EVENT_DATE TIMESTAMP)
+        STORED AS PARQUET LOCATION '%2$s'
+        TBLPROPERTIES ("parquet.compression"="SNAPPY");
+        """;
+    // %s - HIVE EXTERNAL TABLE 이름
+    private static String METASTORE_CHECK_QUERY_FORMAT = "MSCK REPAIR TABLE %s";
 
     public static void main(String[] args) {
         final SparkSession sparkSession = SparkInstance.INSTANCE.getSparkSession();
@@ -31,7 +51,15 @@ public class Main {
             .partitionBy("event_date")
             .mode("overwrite")
             .option("compression", "snappy")
-            .parquet(PATH_TO_PARQUET_OUTPUT);
+            .parquet(ABSOLUTE_PATH_TO_OUTPUT);
+
+        final String createExternalTableQuery = String.format(CREATE_EXTERNAL_TABLE,
+            HIVE_EXTERNAL_TABLE, ABSOLUTE_PATH_TO_OUTPUT);
+        final String metastoreCheckQuery = String.format(METASTORE_CHECK_QUERY_FORMAT,
+            HIVE_EXTERNAL_TABLE);
+
+        sparkSession.sql(createExternalTableQuery);
+        sparkSession.sql(metastoreCheckQuery);
     }
 
     private static StructType getFileSchema() {
