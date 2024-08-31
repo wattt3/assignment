@@ -11,6 +11,7 @@ public enum SparkInstance {
     SparkInstance() {
         final SparkConf sparkConf = new SparkConf()
             .setAppName("assignment")
+            .set("spark.sql.session.timeZone", "Asia/Seoul")
             .setMaster("local[*]");
 
         sparkSession = SparkSession.builder()
@@ -18,7 +19,7 @@ public enum SparkInstance {
             .enableHiveSupport()
             .getOrCreate();
     }
-    
+
     public SparkSession getSparkSession() {
         return sparkSession;
     }
