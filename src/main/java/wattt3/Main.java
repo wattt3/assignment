@@ -34,7 +34,7 @@ public class Main {
         TBLPROPERTIES ("parquet.compression"="SNAPPY");
         """;
     // %s - HIVE EXTERNAL TABLE 이름
-    private static String METASTORE_CHECK_QUERY_FORMAT = "MSCK REPAIR TABLE %s";
+    private static final String METASTORE_CHECK_QUERY_FORMAT = "MSCK REPAIR TABLE %s";
 
     public static void main(String[] args) {
         final SparkSession sparkSession = SparkInstance.INSTANCE.getSparkSession();
@@ -47,7 +47,9 @@ public class Main {
         final Dataset<Row> dfWithEventDate = df.withColumn("event_date",
             date_format(col("event_time"), "yyyy-MM-dd"));
 
-        dfWithEventDate.write()
+        final Dataset<Row> dfWithCheckpoint = dfWithEventDate.checkpoint();
+
+        dfWithCheckpoint.write()
             .partitionBy("event_date")
             .mode("overwrite")
             .option("compression", "snappy")
